@@ -1,0 +1,85 @@
+---
+  - name: Install packages
+    hosts: homelab
+    vars:
+      apt_packages:
+        - bat
+        - bpytop
+        - ctop
+        - docker.io
+        - docker-compose
+        - duf
+        - exa
+        - fail2ban
+        - fd-find
+        - ffmpeg
+        - fish
+        - git
+        - htop
+        - httpie
+        - iotop
+        - jq
+        - ncdu
+        - neovim
+        - ntfs-3g
+        - pipx
+        - progress
+        - ripgrep
+        - tmux
+        - tree
+      pipx_packages:
+        - pre-commit
+    pre_tasks:
+      - name: apt update
+        shell: apt update
+    tasks:
+      - name: Install apt packages
+        apt:
+          name: "{{ item }}"
+          state: latest
+          install_recommends: false
+          autoremove: true
+        with_items: "{{ apt_packages }}"
+      - name: Install python packages
+        community.general.pipx:
+          name: "{{ item }}"
+          state: install
+          force: true
+        with_items: "{{ pipx_packages }}"
+      - name: Install sops
+        shell: |
+          wget https://github.com/mozilla/sops/releases/download/v3.7.3/sops_3.7.3_amd64.deb -O sops.deb
+          dpkg -i sops.deb
+          rm sops.deb
+      - name: Install starship
+        shell: curl -sS https://starship.rs/install.sh | sh -s -- -y
+  - name: Setup nvim
+    hosts: homelab
+    tasks:
+      - name: Create nvim Config Directory
+        file:
+          path: ~/.config/nvim/
+          state: directory
+      - name: Write nvim Config
+        copy: src=./dotfiles/.config/nvim/init.vim dest=~/.config/nvim/init.vim force=no
+      - name: Install vim-plug
+        shell: |
+          sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+            https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+          nvim --headless +PlugInstall +qall
+  - name: Setup Dotfiles
+    hosts: homelab
+    tasks:
+      - name: Create fish Config Directory
+        file:
+          path: ~/.config/fish/
+          state: directory
+      - name: Write fish Config
+        copy: src=./dotfiles/.config/fish/config.fish dest=~/.config/fish/config.fish force=no
+      - name: Write starship Config
+        copy: src=./dotfiles/.config/starship.toml dest=~/.config/starship.toml force=no
+  - name: Set login shell
+    hosts: homelab
+    tasks:
+      - name: Set fish as default shell
+        shell: usermod --shell /usr/bin/fish {{ ansible_env.USER }}
