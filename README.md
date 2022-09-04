@@ -32,3 +32,4 @@ These are mostly for development, not required for using the machine as a server
 - <https://dandavison.github.io/delta/installation.html>
 - <https://github.com/bootandy/dust>
 - <https://github.com/dalance/procs>
+- <https://github.com/bcicen/ctop>
