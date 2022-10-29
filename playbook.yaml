@@ -5,8 +5,6 @@
       apt_packages:
         - bat
         - bpytop
-        - docker.io
-        - docker-compose
         - duf
         - exa
         - fail2ban
@@ -26,12 +24,26 @@
         - ripgrep
         - tmux
         - tree
+      ### docker
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-compose-plugin
       pipx_packages:
         - pre-commit
     pre_tasks:
       - name: apt update
         shell: apt update
     tasks:
+      - name: Add docker repo
+        shell: |
+          apt-get update
+          apt-get install -y ca-certificates curl gnupg lsb-release
+          mkdir -p /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+            $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
       - name: Install apt packages
         apt:
           name: "{{ item }}"
